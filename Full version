@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>دليل التمارين التفاعلي - النسخة الكاملة</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --primary-color: #00f2ff;
+        --accent-color: #00d2d3;
+        --bg-color: #0f1115;
+        --card-bg: rgba(30, 35, 40, 0.95);
+        --text-color: #ffffff;
+        --panel-bg: rgba(20, 20, 20, 0.98);
+        --bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    }
+
+    body {
+        font-family: 'Tajawal', sans-serif;
+        background-color: var(--bg-color);
+        background-image: radial-gradient(circle at 50% 0%, #1a2a3a 0%, #0f1115 100%);
+        color: var(--text-color);
+        display: flex; flex-direction: column; align-items: center;
+        margin: 0; padding: 20px; min-height: 100vh;
+        user-select: none; overflow-x: hidden;
+        transition: background 0.5s ease;
+    }
+
+    h1 { 
+        margin: 10px 0 5px; 
+        color: #fff; 
+        font-weight: 800;
+        font-size: 2rem; 
+        text-align: center; 
+        text-shadow: 0 0 20px rgba(0, 242, 255, 0.3);
+        animation: float 4s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+    }
+    
+    .subtitle { color: #8899a6; margin-bottom: 25px; font-size: 1rem; text-align: center; font-weight: 500; }
+
+    .viewport {
+        position:relative; width:100%; max-width:1000px; aspect-ratio:1000/667; height:auto;
+        box-shadow: 0 50px 80px -20px rgba(0,0,0,0.6);
+        border-radius:24px; overflow:hidden; background:#000;
+        border:1px solid rgba(255,255,255,0.1); 
+        transition: all 0.5s ease;
+    }
+    .viewport:hover { transform: translateY(-5px); box-shadow: 0 60px 90px -20px rgba(0,242,255,0.15); }
+
+    .zoom-layer {width:100%;height:100%;position:relative;transition:transform .6s var(--bounce);}
+    .anatomy-img {display:block;width:100%;height:100%;object-fit:fill;pointer-events:none;}
+    .overlay-layer {position:absolute;top:0;left:0;width:100%;height:100%;z-index:10;}
+    
+    .muscle-zone {
+        fill:rgba(255,255,255,0.01);
+        stroke:rgba(0,242,255,0.5);
+        stroke-width:1px;
+        vector-effect:non-scaling-stroke;
+        cursor:pointer;
+        transition:all .3s var(--bounce);
+        transform-box:fill-box;
+        transform-origin:center;
+    }
+    
+    body.drawing-mode .muscle-zone { pointer-events: none; opacity: 0.1; }
+    body.drawing-mode .muscle-zone.editing { display: none; }
+    
+    .temp-path { fill: rgba(255, 165, 0, 0.4); stroke: #ff9f43; stroke-width: 2px; vector-effect: non-scaling-stroke; }
+    .temp-path-finished { fill: rgba(57, 255, 20, 0.3); stroke: #39ff14; stroke-width: 2px; vector-effect: non-scaling-stroke; }
+
+    body.preview-mode .muscle-zone:hover {
+        stroke-width:3px;
+        stroke:var(--primary-color);
+        fill:rgba(0,242,255,0.2);
+        filter:drop-shadow(0 0 15px var(--primary-color));
+        transform: scale(1.02);
+    }
+    
+    body.preview-mode .muscle-zone.active {
+        stroke:#39ff14;
+        stroke-width:3px;
+        fill:rgba(57,255,20,0.3);
+        animation: pulse 1.5s infinite;
+    }
+    
+    @keyframes pulse {
+        0% { filter: drop-shadow(0 0 5px rgba(57,255,20,0.6)); }
+        50% { filter: drop-shadow(0 0 20px rgba(57,255,20,1)); }
+        100% { filter: drop-shadow(0 0 5px rgba(57,255,20,0.6)); }
+    }
+    
+    body:not(.preview-mode) .muscle-zone.editing {stroke:#ff9f43;stroke-width:3px;stroke-dasharray:5;fill:rgba(255, 159, 67, 0.1);}
+    
+    .backdrop {position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:9990;opacity:0;visibility:hidden;transition:all .4s;backdrop-filter:blur(5px);}
+    .backdrop.show {opacity:1;visibility:visible;}
+    
+    .info-card {
+        position:fixed; top:50%; left:50%;
+        transform:translate(-50%,-40%) scale(0.8);
+        width:90%; max-width:400px;
+        background:var(--card-bg);
+        padding:25px; border-radius:24px;
+        box-shadow:0 25px 50px rgba(0,0,0,0.5);
+        z-index:9999; direction:rtl; color:var(--text-color);
+        opacity:0; visibility:hidden;
+        transition: all 0.5s var(--bounce);
+        border:1px solid rgba(255,255,255,0.1);
+        display:flex; flex-direction:column; gap:15px;
+        max-height:85vh; overflow-y:auto;
+    }
+    .info-card.show {
+        opacity:1; visibility:visible;
+        transform:translate(-50%,-50%) scale(1);
+    }
+    
+    .info-card h2 {margin:0;font-size:1.5rem;color:var(--primary-color);border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:10px;}
+    
+    .exercise-btn {
+        display:flex; align-items:center; justify-content:space-between;
+        width:100%; padding:15px; margin-bottom:10px;
+        background:rgba(255,255,255,0.05);
+        border:1px solid rgba(255,255,255,0.1);
+        border-radius:12px; text-align:right; cursor:pointer;
+        font-weight:700; color:inherit; transition:0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        font-size:1rem;
+        position: relative;
+    }
+    .exercise-btn:hover {
+        background:rgba(0,242,255,0.1);
+        border-color:var(--primary-color);
+        transform: scale(1.02) translateX(-5px);
+    }
+    .exercise-btn:active { transform: scale(0.98); }
+
+    .back-btn {background:transparent;border:1px solid rgba(255,255,255,0.2);color:inherit;padding:8px 16px;border-radius:20px;cursor:pointer;font-size:0.9rem;margin-bottom:15px;font-weight:bold;transition:.2s;}
+    .back-btn:hover {background:rgba(255,255,255,0.1);border-color:var(--primary-color);}
+    
+    .close-popup-btn {
+        position:absolute; top:15px; left:15px;
+        border:none; background:rgba(255,255,255,0.1); color:inherit;
+        width:36px; height:36px; border-radius:50%;
+        font-size:1.5rem; cursor:pointer;
+        display:flex; align-items:center; justify-content:center;
+        transition: .3s var(--bounce);
+    }
+    .close-popup-btn:hover {background:#ff4757; transform: rotate(90deg) scale(1.2); color:white;}
+
+    .main-muscle-img, .detail-img-container { width:100%; height:180px; border-radius:16px; background:#222; margin-bottom:15px; box-shadow:0 5px 15px rgba(0,0,0,0.3); transition: transform 0.3s; }
+    .main-muscle-img:hover { transform: scale(1.02); }
+    
+    .detail-img-container { display: flex; gap: 10px; }
+    .detail-img-container .detail-img { width: 100%; height: 100%; object-fit: contain; border-radius: 12px; flex-grow: 1; background: #222; }
+    .main-muscle-img { object-fit: cover; } 
+
+    .toggle-admin-btn {position:fixed;bottom:20px;left:20px;background:rgba(0,0,0,0.9);color:#fff;border:1px solid var(--primary-color);padding:10px 20px;border-radius:30px;cursor:pointer;z-index:10001;font-weight:bold;box-shadow:0 0 15px rgba(0,0,0,0.5);transition:.3s;}
+    .toggle-admin-btn:hover {background:var(--primary-color);color:#000;}
+    
+    .controller-panel {
+        position:fixed; top:50px; left:20px; width:360px;
+        background:var(--panel-bg); border-radius:12px;
+        display:none; flex-direction:column; z-index:10002;
+        backdrop-filter:blur(15px); box-shadow:0 10px 40px rgba(0,0,0,0.8);
+        border:1px solid #444; color:white; direction:rtl;
+        max-height:85vh; overflow-y:auto; transition: opacity 0.3s;
+    }
+    
+    .panel-header {background:rgba(0,0,0,0.2);padding:15px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #333;cursor: grab;user-select: none;}
+    .control-group label {font-size:0.8rem;color:#aaa;display:block;margin-bottom:5px;}
+    input[type=text],input[type=number],textarea,select{width:100%;padding:10px;background:rgba(0,0,0,0.3);color:white;border:1px solid #333;border-radius:6px;box-sizing:border-box;}
+    input[type=text]:focus,textarea:focus{border-color:var(--primary-color);outline:none;}
+    input[type=range]{width:100%;accent-color:var(--primary-color);}
+    .panel-tabs {display:flex;background:rgba(0,0,0,0.2);border-bottom:1px solid #333;}
+    .tab-btn {flex:1;background:none;border:none;color:#777;padding:12px;cursor:pointer;border-bottom:2px solid transparent;transition:.3s;font-size:0.8rem;}
+    .tab-btn.active {color:var(--primary-color);border-bottom:2px solid var(--primary-color);background:rgba(0,242,255,0.05);}
+    .panel-body {padding:20px;display:none;flex-direction:column;gap:15px;}
+    .panel-body.active {display:flex;}
+    .exercise-block {background:rgba(255,255,255,0.05);padding:15px;border-radius:8px;border:1px solid #333;position:relative;margin-bottom:10px;}
+    .btn-add {background:#2ed573;color:white;border:none;padding:10px;width:100%;cursor:pointer;border-radius:6px;font-weight:bold;}
+    .btn-del {background:#ff4757;color:white;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;font-size:0.7rem;position:absolute;top:10px;left:10px;}
+    .action-row {display:flex;gap:10px;}
+    .btn-io {flex:1;background:#333;color:white;border:1px solid #555;padding:10px;border-radius:6px;cursor:pointer;transition:.2s;}
+    .btn-save-html {width:100%;background:var(--primary-color);color:black;padding:12px;border:none;border-radius:6px;cursor:pointer;font-weight:bold;margin-top:10px;}
+    .btn-draw { width:100%; background:#f39c12; color:white; border:none; padding:12px; border-radius:6px; cursor:pointer; font-weight:bold; margin-bottom: 5px;}
+    .btn-draw.redraw { background:#e67e22; }
+    .btn-draw.active { background:#e74c3c; animation: pulse 1.5s infinite; }
+    .draw-controls { display:none; background:#222; padding:10px; border-radius:8px; margin-top:10px; border:1px solid #444;}
+    
+    .view-section {display:none;animation:slideIn .4s var(--bounce);}
+    .view-section.active {display:block;}
+    @keyframes slideIn {from{opacity:0;transform:translateY(20px) scale(0.9);}to{opacity:1;transform:translateY(0) scale(1);}}
+    
+    .symmetry-btn { background: #9b59b6; width: 100%; color: white; border: none; padding: 10px; border-radius: 6px; margin-top: 5px; cursor: pointer; font-weight: bold; }
+    .manual-part-btn { background: #3498db; width: 100%; color: white; border: none; padding: 10px; border-radius: 6px; margin-top: 5px; cursor: pointer; }
+    .icon-btn { cursor:pointer; padding:0 8px; font-size:1.2rem; transition:0.2s; }
+    .icon-btn:hover { color: var(--primary-color); }
+
+    /* Medical Theme */
+    body.theme-medical {
+        --primary-color: #00e5ff;
+        --accent-color: #ff3333;
+        --bg-color: #05101a;
+        --card-bg: rgba(245, 250, 255, 0.96);
+        --text-color: #0a1929;
+        --panel-bg: rgba(10, 25, 40, 0.95);
+    }
+    body.theme-medical {
+        background-image: 
+            linear-gradient(rgba(0, 229, 255, 0.05) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0, 229, 255, 0.05) 1px, transparent 1px);
+        background-size: 40px 40px;
+        background-color: var(--bg-color);
+        color: #e0f7fa; 
+    }
+    body.theme-medical h1 { color: #00e5ff; }
+    body.theme-medical .subtitle { color: #78909c; }
+    body.theme-medical .viewport { border: 1px solid rgba(0, 229, 255, 0.3); background: #000; box-shadow: 0 0 50px rgba(0, 229, 255, 0.1); }
+    body.theme-medical .info-card { background: var(--card-bg); color: #0a1929; border: 1px solid var(--primary-color); border-top: 4px solid var(--primary-color); box-shadow: 0 20px 60px rgba(0,0,0,0.8); border-radius: 4px; }
+    body.theme-medical .info-card h2, body.theme-medical .info-card h3 { color: #005662; font-family: 'Tajawal', sans-serif; text-transform: uppercase; letter-spacing: 1px; }
+    body.theme-medical .exercise-btn { background: #eef7ff; color: #005662; border: 1px solid #cce3ff; border-radius: 4px; }
+    body.theme-medical .exercise-btn:hover { background: var(--primary-color); color: #fff; }
+    body.theme-medical .back-btn { color: #0a1929; border-color: #0a1929; }
+    body.theme-medical .close-popup-btn { color: #333; background: rgba(0,0,0,0.05); }
+    body.theme-medical .close-popup-btn:hover { color: white; }
+    body.theme-medical .controller-panel { background: var(--panel-bg); border: 1px solid var(--primary-color); font-family: 'Courier Prime', monospace; }
+    body.theme-medical .controller-panel input, body.theme-medical .controller-panel textarea, body.theme-medical .controller-panel select { background: rgba(0, 10, 20, 0.8); border: 1px solid #334; font-family: 'Courier Prime', monospace; color: var(--primary-color); }
+    body.theme-medical .muscle-zone.active { stroke: var(--accent-color); fill: rgba(255, 51, 51, 0.3); filter: drop-shadow(0 0 10px var(--accent-color)); }
+    
+    .theme-btn {
+        position: fixed; bottom: 70px; left: 20px; width: 50px; height: 50px;
+        border-radius: 50%; background: linear-gradient(135deg, #00f2ff, #0099ff);
+        border: 2px solid #fff; cursor: pointer; z-index: 10001;
+        box-shadow: 0 5px 15px rgba(0,242,255,0.4);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.5rem; transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .theme-btn:hover { transform: scale(1.1) rotate(15deg); }
+    body.theme-medical .theme-btn { background: #fff; border-color: var(--primary-color); color: var(--primary-color); box-shadow: 0 0 20px var(--primary-color); }
+
+</style>
+</head>
+<body class="preview-mode">
+
+<h1 id="mainTitle">دليل التمارين الرياضية</h1>
+<p class="subtitle">اضغط على العضلة لعرض التمارين وشرح الأداء</p>
+
+<div class="viewport" id="mainViewport">
+    <div class="zoom-layer" id="zoomLayer">
+        <img id="mainAnatomyImage" src="" class="anatomy-img" onerror="this.src='https://i.ibb.co/wbBr9k6/Whats-App-Image-2025-11-27-22-11-48-4d10cf33.jpg'">
+        <svg class="overlay-layer" id="svgOverlay" viewBox="0 0 1000 667" preserveAspectRatio="none">
+            </svg>
+    </div>
+</div>
+
+<div class="backdrop" id="backdrop" onclick="resetZoom()"></div>
+<div class="info-card" id="infoCard">
+    <button class="close-popup-btn" onclick="resetZoom()">×</button>
+    <h2 id="cardTitle"></h2>
+    <div id="viewList" class="view-section active">
+        <img id="mainMuscleImg" class="main-muscle-img" src="">
+        <div id="buttonsContainer"></div>
+    </div>
+    <div id="viewDetail" class="view-section">
+        <button class="back-btn" onclick="showListView()">🡠 قائمة التمارين</button>
+        <div id="detailImageContainer" class="detail-img-container">
+            <img src="" class="detail-img" id="detailImgStart">
+            <img src="" class="detail-img" id="detailImgEnd">
+        </div>
+        <h3 id="detailTitle" style="color:var(--primary-color);"></h3>
+        <p id="detailDesc"></p>
+    </div>
+</div>
+
+<button class="theme-btn" onclick="toggleTheme()" title="تغيير الثيم">🧬</button>
+
+<button class="toggle-admin-btn" onclick="toggleAdmin(true)">الإعدادات</button>
+
+<div id="adminPanel" class="controller-panel">
+    <div class="panel-header" id="panelHeader">
+        <span>لوحة التحكم</span>
+        <div>
+            <span id="saveStatus" style="color:#39ff14;display:none;font-size:0.8rem;margin-left:10px;">تم الحفظ</span>
+            <span class="icon-btn" onclick="togglePanelOpacity()" title="شفافية">👁</span>
+            <span class="icon-btn" onclick="toggleAdmin(false)" title="إغلاق">✖</span>
+        </div>
+    </div>
+    <div class="control-group" style="padding:15px;background:rgba(0,0,0,0.2);">
+        <label>العضلة الحالية:</label>
+        <select id="muscleSelector" onchange="loadMuscleData(this.value)"></select>
+    </div>
+    <div class="panel-tabs">
+        <button class="tab-btn active" onclick="switchTab('content')">البيانات</button>
+        <button class="tab-btn" onclick="switchTab('layout')">الأبعاد</button>
+        <button class="tab-btn" onclick="switchTab('draw')">الرسم (الجسدين)</button>
+        <button class="tab-btn" onclick="switchTab('settings')">تصدير</button>
+    </div>
+    <div id="tab-content" class="panel-body active">
+        <h4 style="color:#ff9f43;margin:0;">بيانات العضلة</h4>
+        <div class="control-group"><label>اسم العضلة</label><input type="text" id="editTitle"></div>
+        <div class="control-group"><label>صورة العضلة</label><input type="text" id="editMainImg"></div>
+        <hr style="border-color:#333;">
+        <h4 style="color:var(--primary-color);">التمارين</h4>
+        <div id="exercisesContainer"></div>
+        <button class="btn-add" onclick="addExercise()">+ إضافة تمرين جديد</button>
+    </div>
+    <div id="tab-layout" class="panel-body">
+        <div class="control-group"><label>إزاحة X/Y</label><div style="display:flex;gap:10px;"><input type="range" min="-200" max="200" value="0" id="inpX"><input type="range" min="-200" max="200" value="0" id="inpY"></div></div>
+        <div class="control-group"><label>حجم عرض/طول</label><div style="display:flex;gap:10px;"><input type="range" min="0.3" max="3" step="0.05" value="1" id="inpScaleX"><input type="range" min="0.3" max="3" step="0.05" value="1" id="inpScaleY"></div></div>
+    </div>
+    <div id="tab-draw" class="panel-body">
+        <h4 style="color:#f39c12;">رسم الأشكال (نظام الجسدين)</h4>
+        <button id="drawBtn" class="btn-draw" onclick="toggleDrawMode()">+ رسم عضلة جديدة بالكامل</button>
+        <button id="redrawBtn" class="btn-draw redraw" onclick="startRedraw()">✎ إعادة رسم العضلة الحالية</button>
+        <div id="drawControls" class="draw-controls">
+            <p style="font-size:0.8rem;color:#ccc;margin:0 0 10px;">ارسم جهة واحدة ثم اختر نوع الجسم أدناه ليتم النسخ.</p>
+            <div class="control-group" style="background:rgba(0,0,0,0.3);padding:10px;border-radius:6px;border:1px solid #555;">
+                <label style="color:var(--primary-color);">أي جسد ترسم عليه؟</label>
+                <select id="bodyZoneSelector" onchange="updateSymmetryAxis()">
+                    <option value="front">الجسد الأمامي (يسار الصورة)</option>
+                    <option value="back">الجسد الخلفي (يمين الصورة)</option>
+                </select>
+                <label style="margin-top:10px;">محور التماثل (X) لهذا الجسد:</label>
+                <input type="number" id="symmetryAxis" value="250">
+            </div>
+            <button class="symmetry-btn" onclick="finishDrawing(true)">✨ إنهاء مع تماثل تلقائي</button>
+            <button class="manual-part-btn" onclick="addManualPart()">➕ إضافة جزء آخر يدوياً</button>
+            <div style="display:flex;gap:5px;margin-top:5px;">
+                <button class="btn-io" onclick="undoLastPoint()">تراجع</button>
+                <button class="btn-del" onclick="cancelDrawing()" style="position:static;width:100%;">إلغاء</button>
+            </div>
+        </div>
+        <hr style="border-color:#333;margin:15px 0;">
+        <div class="control-group">
+            <label>كود المسار (SVG Path)</label>
+            <textarea id="pathDataInput" rows="3" onchange="updatePathData()"></textarea>
+        </div>
+        <button class="btn-del" style="position:static;width:100%;margin-top:10px;background:#c0392b;" onclick="deleteCurrentMuscle()">حذف العضلة الحالية تماماً</button>
+    </div>
+    <div id="tab-settings" class="panel-body">
+        <h4 style="color:#ff9f43;">إعدادات عامة</h4>
+        <div class="control-group"><label>صورة الجسم الرئيسية</label><input type="text" id="mainImageInput"></div>
+        <h4 style="color:var(--primary-color);margin-top:20px;">استيراد / تصدير</h4>
+        <div class="action-row">
+            <button class="btn-io" onclick="exportDataJSON()">تصدير JSON</button>
+            <button class="btn-io" onclick="document.getElementById('importFile').click()">استيراد JSON</button>
+            <input type="file" id="importFile" style="display:none" accept=".json" onchange="handleImport(this)">
+        </div>
+        <h4 style="color:#ff9f43;margin-top:20px;">توليد التطبيق</h4>
+        <button class="btn-save-html" onclick="exportHTML()">حفظ نسخة العميل (نظيفة 100%)</button>
+        <hr style="border-color:#333;">
+        <div style="background:rgba(0,0,0,0.3);padding:10px;border-radius:5px;display:flex;gap:10px;align-items:center;">
+            <input type="checkbox" id="previewToggle" checked onchange="togglePreviewMode()">
+            <label for="previewToggle" style="margin:0;cursor:pointer;">وضع المعاينة</label>
+        </div>
+        <button class="btn-io" style="background:#c0392b;margin-top:10px;" onclick="resetToFactory()">استعادة المصنع (للبيانات الأصلية)</button>
+    </div>
+</div>
+
+<script>
+// ============================================
+// DATA INSERTION START
+// (البيانات لم تتغير - بقيت كما هي لضمان اكتمال الكود)
+// ============================================
+let globalConfig = {
+  "mainImage": "https://i.ibb.co/wbBr9k6/Whats-App-Image-2025-11-27-22-11-48-4d10cf33.jpg"
+};
+
+let defaultData = {
+  "chest": {
+    "title": "عضلات الصدر (Chest)",
+    "mainImg": "https://i.ibb.co/NgQGMmH6/Whats-App-Image-2025-11-27-21-36-27-825c4e27.jpg",
+    "exercises": [
+      {
+        "name": "ضغط بنش مستوي (bench press)",
+        "desc": "استلقِ على الظهر، امسك البار بقبضة أوسع قليلاً من الكتفين. أنزل البار ببطء لمنتصف الصدر ثم ادفعه للأعلى بقوة.",
+        "images": {
+          "startImg": "https://i.ibb.co/PvPsnvhB/Bench-Press.gif",
+          "endImg": ""
+        }
+      },
+      {
+        "name": "تفتيح بالدامبل (Dumbbell Flys)",
+        "desc": "استخدم الدامبلز، افتح ذراعيك بشكل قوس واسع لشد الصدر، ثم ضمهما للأعلى مع ثني الكوع قليلاً.",
+        "images": {
+          "startImg": "https://i.ibb.co/CppHgsmg/Decline-Dumbbell-Fly.webp",
+          "endImg": ""
+        }
+      },
+      {
+        "name": "ضغط بنش عالي (Incline Press)",
+        "desc": "يستهدف الجزء العلوي من الصدر. اضبط المقعد بزاوية 45 درجة وادفع الدامبلز للأعلى.",
+        "images": {
+          "startImg": "https://i.ibb.co/Xxrqgj5q/DB-INC-BP.gif",
+          "endImg": ""
+        }
+      }
+    ],
+    "t": {
+      "x": "-4",
+      "y": "2",
+      "sx": "0.95",
+      "sy": "1"
+    },
+    "pathD": "M171,197 L222,190 L237,179 L236,173 L236,170 L240,167 L240,164 L232,160 L239,159 L240,156 L242,151 L236,147 L234,145 L222,140 L212,140 L199,138 L190,138 L176,138 L146,153 L136,156 L125,164 L115,174 L169,197 L170,196 L172,196 Z M329,197 L278,190 L263,179 L264,173 L264,170 L260,167 L260,164 L268,160 L261,159 L260,156 L258,151 L264,147 L266,145 L278,140 L288,140 L301,138 L310,138 L324,138 L354,153 L364,156 L375,164 L385,174 L331,197 L330,196 L328,196 Z"
+  },
+  "abs": {
+    "title": "عضلات البطن (Abs)",
+    "mainImg": "https://i.ibb.co/DDdvny6F/Whats-App-Image-2025-11-27-21-36-26-f78f4910.jpg",
+    "exercises": [
+      {
+        "name": "تمرين الطحن (Crunches)",
+        "desc": "استلقِ على الأرض واثنِ ركبتيك. ارفع كتفيك عن الأرض باستخدام عضلات البطن فقط.",
+        "images": {
+          "startImg": "https://i.ibb.co/MDGw1rpV/tuck-crunches-jase-stuart-exercise-f6w2evz2yx0144my.gif",
+          "endImg": ""
+        }
+      },
+      {
+        "name": "رفع الأرجل (Leg Raises)",
+        "desc": "استلقِ وارفع رجليك معاً بزاوية 90 درجة، ثم أنزلهما ببطء دون لمس الأرض.",
+        "images": {
+          "startImg": "https://i.ibb.co/zhBdt7mk/LEG-RAISE.gif",
+          "endImg": ""
+        }
+      },
+      {
+        "name": "  بلانك  ( plank)",
+        "desc": "ارتكز على المرفقين وأطراف القدمين، وحافظ على استقامة جسمك لأطول فترة ممكنة.",
+        "images": {
+          "startImg": "https://i.ibb.co/RGC407w7/PLANK-1.gif",
+          "endImg": ""
+        }
+      }
+    ],
+    "t": {
+      "x": "-4",
+      "y": "0",
+      "sx": "0.8",
+      "sy": "1"
+    },
+    "pathD": "M246,189 L246,328 L229,328 L205,303 L197,287 L184,231 L196,196 L245,189 Z M254,189 L254,328 L271,328 L295,303 L303,287 L316,231 L304,196 L255,189 Z"
+  },
+  "shoulders-front": {
+    "title": "الكتف الأمامي (Front Delts)",
+    "mainImg": "https://i.ibb.co/jPHtNbmh/Gemini-Generated-Image-7nocgz7nocgz7noc.png",
+    "exercises": [
+      {
+        "name": "ضغط أكتاف أمامي (Overhead Press)",
+        "desc": "ادفع البار أو الدامبل من مستوى الكتف إلى أعلى الرأس باستقامة تامة.",
+        "images": {
+          "startImg": "https://i.ibb.co/Kc6vc0r7/desenvolvimento-militar.gif",
+          "endImg": ""
+        }
+      },
+      {
+        "name": "رفرفة أمامي (Front Raises)",
+        "desc": "ارفع الدامبلز للأمام حتى مستوى النظر ببطء وتحكم.",
+        "images": {
+          "startImg": "https://i.ibb.co/fYtwmS1k/DB-F-RAISE.gif",
+          "endImg": ""
+        }
+      }
+    ],
+    "t": {
+      "x": "-4",
+      "y": "-4",
+      "sx": "0.9",
+      "sy": "0.75"
+    },
+    "pathD": "M170,136 L135,159 L83,192 L90,171 L104,148 L117,140 L125,135 L168,136 Z M330,136 L365,159 L417,192 L410,171 L396,148 L383,140 L375,135 L332,136 Z"
+  },
+  "biceps": {
+    "title": "عضلات البايسبس (Biceps)",
+    "mainImg": "https://i.ibb.co/Xx453bmd/Whats-App-Image-2025-11-27-21-36-33-2a871978.jpg",
+    "exercises": [
+      {
+        "name": "تبادل بالدامبل (Dumbbell Curls)",
+        "desc": "قف مستقيماً وقم بتبادل رفع الدامبلز مع تدوير المعصم للأعلى عند الرفع.",
+        "images": {
+          "startImg": "https://i.ibb.co/hxqFcK0w/b-ceps.gif",
+          "endImg": ""
+        }
+      },
+      {
+        "name": "مرجحة بالبار (Barbell Curl)",
+        "desc": "امسك البار بعرض الكتفين وارفع الوزن مع تثبيت الكوعين بجانب الجسم.",
+        "images": {
+          "startImg": "https://i.ibb.co/Wv30Y1YK/Barbell-Curl.gif",
+          "endImg": ""
+        }
+      },
+      {
+        "name": "المرجحة المطرقة (Hammer Curls)",
+        "desc": "امسك الدامبلز بوضعية محايدة (مثل المطرقة) وارفع للأعلى لاستهداف العضلة العضدية.",
+        "images": {
+          "startImg": "https://i.ibb.co/Gwf2QhL/rosca-alternada-com-halteres-1.gif",
+          "endImg": ""
+        }
+      }
+    ],
+    "t": {
+      "x": "-3",
+      "y": "1",
+      "sx": "0.95",
+      "sy": "1.05"
+    },
+    "pathD": "M132,188 L114,225 L77,250 L69,241 L68,222 L88,188 L116,176 L130,186 Z M368,188 L386,225 L423,250 L431,241 L432,222 L412,188 L384,176 L370,186 Z"
+  },
+  "forearms": {
+    "title": "الساعد الأمامي (Forearms)",
+    "mainImg": "https://i.ibb.co/NnrbvWqv/1.png",
+    "exercises": [
+      {
+        "name": "ثني المعصم (Wrist Curls)",
+        "desc": "أسند ساعدك على بنش وحرك المعصم فقط لرفع الوزن.",
+        "images": {
+          "startImg": "https://i.ibb.co/YVLWYkr/10e507cf-76b4-4c4f-85b8-d0ece7548395.gif",
+          "endImg": ""
+        }
+      }
+    ],
+    "t": {
+      "x": "-4",
+      "y": "2",
+      "sx": "0.95",
+      "sy": "1"
+    },
+    "pathD": "M68,209 L68,253 L72,268 L93,244 L91,272 L61,299 L52,315 L36,312 L23,312 L23,284 L35,240 L68,210 Z M432,209 L432,253 L428,268 L407,244 L409,272 L439,299 L448,315 L464,312 L477,312 L477,284 L465,240 L432,210 Z"
+  },
+  "quads": {
+    "title": "الأرجل الأمامية (Quads)",
+    "mainImg": "https://i.ibb.co/7Hcm1By/Whats-App-Image-2025-11-27-21-36-27-9b953be4.jpg",
+    "exercises": [
+      {
+        "name": "القرفصاء (Squat)",
+        "desc": "سيد التمارين. ضع البار على كتفك وانزل بمؤخرتك للخلف والأسفل مع الحفاظ على استقامة الظهر.",
+        "images": {
+          "startImg": "https://i.ibb.co/93pkSb1X/gym-1.gif",
+          "endImg": ""
+        }
+      },
+      {
+        "name": "رفرفة أرجل أمامي (Leg Extension)",
+        "desc": "اجلس على الجهاز وادفع الوزن للأعلى باستخدام عضلات الفخذ الأمامية.",
+        "images": {
+          "startImg": "https://i.ibb.co/zVWFtPyd/gym-2.gif",
+          "endImg": ""
+        }
+      },
+      {
+        "name": "الطعن (Lunges)",
+        "desc": "اخطي خطوة واسعة للأمام وانزل بركبتك الخلفية نحو الأرض.",
+        "images": {
+          "startImg": "https://i.ibb.co/3mC03dWc/afundo-com-halteres.gif",
+          "endImg": ""
+        }
+      }
+    ],
+    "t": {
+      "x": "-4",
+      "y": "1",
+      "sx": "0.95",
+      "sy": "1"
+    },
+    "pathD": "M168,277 L205,304 L225,328 L237,348 L241,378 L228,401 L222,408 L220,426 L216,440 L208,453 L191,466 L192,456 L172,430 L171,419 L156,432 L149,446 L149,448 L149,450 L146,442 L129,419 L120,389 L124,363 L138,336 L147,329 L152,303 L157,288 L168,276 Z M332,277 L295,304 L275,328 L263,348 L259,378 L272,401 L278,408 L280,426 L284,440 L292,453 L309,466 L308,456 L328,430 L329,419 L344,432 L351,446 L351,448 L351,450 L354,442 L371,419 L380,389 L376,363 L362,336 L353,329 L348,303 L343,288 L332,276 Z"
+  },
+  "calves": {
+    "title": "السمانة (Calves)",
+    "mainImg": "https://i.ibb.co/Rp6xfSwp/Unzz-titled.png",
+    "exercises": [
+      {
+        "name": "رفع الكعب واقفاً (Calf Raise)",
+        "desc": "قف على طرف أصابعك وارفع كعبك للأعلى وللأسفل بمدى حركي كامل.",
+        "images": {
+          "startImg": "https://i.ibb.co/tM15xZ8T/24164.gif ",
+          "endImg": ""
+        }
+      }
+    ],
+    "t": {
+      "x": "-4",
+      "y": "3",
+      "sx": "0.95",
+      "sy": "0.95"
+    },
+    "pathD": "M147,471 L144,519 L146,576 L136,591 L140,576 L126,548 L122,516 L128,489 L148,470 L197,472 L179,496 L153,592 L165,580 L171,583 L182,545 L189,544 L201,529 L206,517 L203,501 L199,487 L197,473 Z M353,471 L356,519 L354,576 L364,591 L360,576 L374,548 L378,516 L372,489 L352,470 L303,472 L321,496 L347,592 L335,580 L329,583 L318,545 L311,544 L299,529 L294,517 L297,501 L301,487 L303,473 Z"
+  },
+  "traps": {
+    "title": "الترابيس (Traps)",
+    "mainImg": "https://i.ibb.co/qMM8Tgg4/xxcxc8-1d5824bbmm0c.jpg",
+    "exercises": [
+      {
+        "name": "هز الأكتاف (Shrugs)",
+        "desc": "امسك الدامبلز أو البار وارفع كتفيك نحو أذنيك ثم انزل ببطء.",
+        "images": {
+          "startImg": "https://i.ibb.co/N2HGqLHq/dumbbell-shrug-480x480.webp",
+          "endImg": ""
+        }
+      }
+    ],
+    "t": {
+      "x": "-4",
+      "y": "2",
+      "sx": "1.05",
+      "sy": "1.05"
+    },
+    "pathD": "M282,102 L306,110 L332,118 L349,125 L358,133 L359,135 L347,134 L340,132 L298,131 L295,127 L290,121 L287,116 L282,101 Z M218,102 L194,110 L168,118 L151,125 L142,133 L141,135 L153,134 L160,132 L202,131 L205,127 L210,121 L213,116 L218,101 Z"
+  },
+  "traps-back": {
+    "title": "الترابيس (خلفي)",
+    "mainImg": "https://i.ibb.co/svp4tD7H/Whats-App-Image-2025-11-27-22-11-48-f41a8ca4.jpg",
+    "exercises": [
+      {
+        "name": "هز الكتفين(shrugs)",
+        "desc": "ركّز على تحريك كتفيك فقط – لا تثنِ مرفقيك.\n✔ نفّذ التمرين ببطء وتحكّم كامل، وتجنّب الحركات المفاجئة أو العنيفة.\n✔ توقّف فورًا إذا شعرتَ بأي ألم أو انزعاج واستشرْ مختصًا.‏​",
+        "images": {
+          "startImg": "https://i.ibb.co/60kjwRdJ/Dip-Shrugs.gif",
+          "endImg": ""
+        }
+      }
+    ],
+    "t": {
+      "x": "20",
+      "y": "2",
+      "sx": "0.65",
+      "sy": "0.85"
+    },
+    "pathD": "M772,80 L772,99 L796,130 L830,138 L864,132 L878,133 L858,119 L825,107 L812,106 L810,100 L802,79 L796,79 L804,91 L788,79 L772,78 L772,80 Z M728,80 L728,99 L704,130 L670,138 L636,132 L622,133 L642,119 L675,107 L688,106 L690,100 L698,79 L704,79 L696,91 L712,79 L728,78 L728,80 Z"
+  },
+  "shoulders-back": {
+    "title": "الكتف الخلفي (Rear Delts)",
+    "mainImg": "https://i.ibb.co/84fYPRFy/x.png",
+    "exercises": [
+      {
+        "name": "رفرفة خلفي (Reverse Fly)",
+        "desc": "انحنِ بجذعك للأمام وارفع الدامبلز للجانبين لاستهداف خلفية الكتف.",
+        "images": {
+          "startImg": "https://i.ibb.co/b93Bh12/remada-inclinada-a-45-graus.gif",
+          "endImg": ""
+        }
+      },
+      {
+        "name": "سحب الوجه (Face Pulls)",
+        "desc": "استخدم الكابل واسحب الحبل باتجاه وجهك مع فتح الكوعين للخارج.",
+        "images": {
+          "startImg": "https://i.ibb.co/vCvT1JdZ/FACE-PULL.gif",
+          "endImg": ""
+        }
+      }
+    ],
+    "t": {
+      "x": "19",
+      "y": "-1",
+      "sx": "1.15",
+      "sy": "0.85"
+    },
+    "pathD": "M711,138 L678,131 L658,134 L636,144 L620,162 L612,171 L629,164 L657,159 L652,164 L640,174 L642,178 L652,171 L666,166 L698,143 L677,151 L670,151 L685,141 L673,138 L709,138 Z M789,138 L822,131 L842,134 L864,144 L880,162 L888,171 L871,164 L843,159 L848,164 L860,174 L858,178 L848,171 L834,166 L802,143 L823,151 L830,151 L815,141 L827,138 L791,138 Z"
+  },
+  "lats": {
+    "title": "الظهر / المجنص (Lats)",
+    "mainImg": "https://i.ibb.co/0VKTdYM8/Whats-App-Image-2025-11-27-22-11-48-6b4a59ce.jpg",
+    "exercises": [
+      {
+        "name": "سحب عالي (Lat Pulldown)",
+        "desc": "امسك البار بقبضة واسعة واسحبه لأسفل باتجاه أعلى الصدر.",
+        "images": {
+          "startImg": "https://i.ibb.co/YBmpqtgR/pulley-pegada-aberta.gif",
+          "endImg": ""
+        }
+      },
+      {
+        "name": "سحب أرضي (Cable Row)",
+        "desc": "اجلس واسحب المقبض نحو بطنك مع عصر عضلات الظهر.",
+        "images": {
+          "startImg": "https://i.ibb.co/TMKs10Y1/cable-row.gif",
+          "endImg": ""
+        }
+      },
+      {
+        "name": "منشار دمبل (One Arm Row)",
+        "desc": "ارتكز على بنش واسحب الدامبل لجانب جسمك.",
+        "images": {
+          "startImg": "https://i.ibb.co/8n669q5c/bentoverrows.gif",
+          "endImg": ""
+        }
+      }
+    ],
+    "t": {
+      "x": "21",
+      "y": "-2",
+      "sx": "0.85",
+      "sy": "1.15"
+    },
+    "pathD": "M753,125 L771,82 L772,169 L771,237 L816,247 L859,233 L891,212 L888,188 L876,174 L879,168 L836,145 L799,133 L771,85 Z M747,125 L729,82 L728,169 L729,237 L684,247 L641,233 L609,212 L612,188 L624,174 L621,168 L664,145 L701,133 L729,85 Z"
+  },
+  "triceps": {
+    "title": "الترايسبس (Triceps)",
+    "mainImg": "https://i.ibb.co/DfmgbnX9/Untcitcccled.png",
+    "exercises": [
+      {
+        "name": "دفع كابل لأسفل (Pushdown)",
+        "desc": "امسك الحبل أو البار وادفعه للأسفل مع تثبيت الكوعين.",
+        "images": {
+          "startImg": "https://i.ibb.co/1YY9Q4v7/One-arm-triceps-pushdown.gif",
+          "endImg": ""
+        }
+      },
+      {
+        "name": "كسر جمجمة (Skullcrushers)",
+        "desc": "استلقِ وانزل البار باتجاه الجبهة ثم ادفعه للأعلى.",
+        "images": {
+          "startImg": "https://i.ibb.co/N6PTkZGf/Barbell-Reverse-Grip-Skullcrusher-1.gif",
+          "endImg": ""
+        }
+      },
+      {
+        "name": "متوازي (Dips)",
+        "desc": "ارفع جسمك على المتوازي وانزل حتى زاوية 90 درجة للكوع.",
+        "images": {
+          "startImg": "https://i.ibb.co/9HfKCyZY/Triceps-Dips.gif",
+          "endImg": ""
+        }
+      }
+    ],
+    "t": {
+      "x": "21",
+      "y": "4",
+      "sx": "1.15",
+      "sy": "1.05"
+    },
+    "pathD": "M651,172 L652,184 L644,222 L620,243 L629,225 L602,230 L613,205 L597,231 L602,202 L597,198 L579,218 L580,198 L599,182 L624,167 L652,171 Z M849,172 L848,184 L856,222 L880,243 L871,225 L898,230 L887,205 L903,231 L898,202 L903,198 L921,218 L920,198 L901,182 L876,167 L848,171 Z"
+  },
+  "forearms-back": {
+    "title": "الساعد خلفي (Extensors)",
+    "mainImg": "https://i.ibb.co/9kbMmTYw/2.png",
+    "exercises": [
+      {
+        "name": "مرجحة معكوسة (Reverse Curl)",
+        "desc": "امسك البار بقبضة معكوسة وارفع الوزن لتقوية الساعد الخارجي.",
+        "images": {
+          "startImg": "https://i.ibb.co/PZ7jPNcT/Barbell-Reverse-Curl.webp",
+          "endImg": ""
+        }
+      }
+    ],
+    "t": {
+      "x": "20",
+      "y": "-1",
+      "sx": "0.9",
+      "sy": "1.05"
+    },
+    "pathD": "M944,199 L980,236 L984,260 L993,280 L995,325 L964,322 L958,308 L934,290 L924,256 L920,248 L936,251 L928,209 L945,231 L952,229 L944,199 Z M556,199 L520,236 L516,260 L507,280 L505,325 L536,322 L542,308 L566,290 L576,256 L580,248 L564,251 L572,209 L555,231 L548,229 L556,199 Z"
+  },
+  "lower-back": {
+    "title": "أسفل الظهر (Lower Back)",
+    "mainImg": "https://i.ibb.co/m5QTGCHL/Untisstled.png",
+    "exercises": [
+      {
+        "name": "الرفعة الميتة (Deadlift)",
+        "desc": "تمرين شامل. ارفع البار من الأرض مع الحفاظ على استقامة الظهر تماماً.",
+        "images": {
+          "startImg": "https://i.ibb.co/Z1YgdrpG/Barbell-Deadlift.gif",
+          "endImg": "https://i.ibb.co/KxqN9VJ1/Deadlift-form.gif"
+        }
+      },
+      {
+        "name": "تمرين القطنية (Back Extension)",
+        "desc": "استخدم جهاز القطنية لرفع جذعك للأعلى باستخدام عضلات أسفل الظهر.",
+        "images": {
+          "startImg": "https://i.ibb.co/MkfW4K0L/back-extension-1.gif",
+          "endImg": ""
+        }
+      }
+    ],
+    "t": {
+      "x": "20",
+      "y": "-4",
+      "sx": "0.65",
+      "sy": "0.65"
+    },
+    "pathD": "M773,234 L792,234 L808,235 L804,270 L790,281 L778,291 L772,293 L771,230 L776,233 Z M727,234 L708,234 L692,235 L696,270 L710,281 L722,291 L728,293 L729,230 L724,233 Z"
+  },
+  "glutes": {
+    "title": "المؤخرة (Glutes)",
+    "mainImg": "https://i.ibb.co/JWpX18mR/Whats-App-Image-2025-11-27-21-36-26-d025ed78.jpg",
+    "exercises": [
+      {
+        "name": "دفع الحوض (Hip Thrust)",
+        "desc": "أسند ظهرك على بنش وضع الوزن فوق الحوض، ثم ارفع الحوض للأعلى بقوة.",
+        "images": {
+          "startImg": "https://i.ibb.co/dJgP5Thc/Barbell-Hip-Thrust.gif",
+          "endImg": ""
+        }
+      }
+    ],
+    "t": {
+      "x": "22",
+      "y": "0",
+      "sx": "0.8",
+      "sy": "0.9"
+    },
+    "pathD": "M771,306 L805,282 L824,270 L843,273 L864,314 L863,350 L845,344 L828,351 L808,352 L773,337 L772,305 Z M729,306 L695,282 L676,270 L657,273 L636,314 L637,350 L655,344 L672,351 L692,352 L727,337 L728,305 Z"
+  },
+  "hamstrings": {
+    "title": "الأرجل الخلفية (Hamstrings)",
+    "mainImg": "https://i.ibb.co/qYtJqVqN/Untxxdditled.png",
+    "exercises": [
+      {
+        "name": "رفرفة خلفي (Leg Curl)",
+        "desc": "استخدم جهاز العضلة الخلفية لثني الركبة وسحب الوزن.",
+        "images": {
+          "startImg": "https://i.ibb.co/CpYqhRZ0/gym-3.gif",
+          "endImg": ""
+        }
+      },
+      {
+        "name": "الرفعة الميتة الرومانية (RDL)",
+        "desc": "انزل بالبار مع ثني بسيط للركبة والتركيز على شد العضلة الخلفية.",
+        "images": {
+          "startImg": "https://i.ibb.co/B5BKfhC4/RM-BB-DL.gif",
+          "endImg": ""
+        }
+      }
+    ],
+    "t": {
+      "x": "-2",
+      "y": "5",
+      "sx": "1",
+      "sy": "1"
+    },
+    "pathD": "M764,346 L763,389 L748,408 L744,420 L744,442 L732,454 L722,447 L722,432 L720,429 L721,421 L712,419 L703,437 L672,464 L670,454 L647,397 L645,364 L678,320 L682,344 L764,344 L780,343 L859,342 L864,313 L891,358 L895,394 L884,424 L869,454 L866,458 L839,437 L828,418 L820,418 L819,426 L817,431 L820,440 L817,450 L806,451 L796,434 L796,410 L779,386 L778,345 L764,346 Z"
+  },
+  "calves-back": {
+    "title": "السمانة خلفي (Calves)",
+    "mainImg": "https://i.ibb.co/F49bVPYc/Untixxxxtled.png",
+    "exercises": [
+      {
+        "name": "رفع الكعب جالساً (Seated Calf Raise)",
+        "desc": "يستهدف عضلة السمانة الداخلية (Soleus).",
+        "images": {
+          "startImg": "https://i.ibb.co/nNn9VVz4/6642.gif",
+          "endImg": ""
+        }
+      }
+    ],
+    "t": {
+      "x": "22",
+      "y": "4",
+      "sx": "0.8",
+      "sy": "1.05"
+    },
+    "pathD": "M818,477 L808,507 L814,530 L824,544 L836,563 L844,549 L845,533 L844,518 L863,530 L876,531 L871,532 L858,569 L856,589 L869,573 L868,593 L873,584 L887,549 L896,527 L893,500 L874,473 L860,465 L836,448 L838,468 L829,464 L825,440 L818,476 Z M682,477 L692,507 L686,530 L676,544 L664,563 L656,549 L655,533 L656,518 L637,530 L624,531 L629,532 L642,569 L644,589 L631,573 L632,593 L627,584 L613,549 L604,527 L607,500 L626,473 L640,465 L664,448 L662,468 L671,464 L675,440 L682,476 Z"
+  },
+  "Obliques": {
+    "title": "العضلات الجانبين (Obliques)",
+    "mainImg": "https://i.ibb.co/C5x0DqbJ/abdominal-oblique-muscles-functional-anatomy-guide-1.jpg",
+    "exercises": [
+      {
+        "name": " اللوح الجانبي (Side Plank)",
+        "desc": "استلقِ على جانبك مع وضع الساعد تحت الكتف مباشرة، والقدمين متراكبتين أو واحدة أمام الأخرى.\n\nارفع الوركين ببطء لتشكيل خط مستقيم من الرأس إلى القدمين، مع شد عضلات البطن والأرداف.",
+        "images": {
+          "startImg": "https://i.ibb.co/99p8rQLS/SIDE-PLANK.gif",
+          "endImg": ""
+        }
+      }
+    ],
+    "t": {
+      "x": "-5",
+      "y": "2",
+      "sx": "0.9",
+      "sy": "0.95"
+    },
+    "pathD": "M201,298 L164,275 L160,262 L159,236 L149,209 L151,198 L195,196 L185,229 L193,269 L196,288 L201,296 L202,297 Z M299,298 L336,275 L340,262 L341,236 L351,209 L349,198 L305,196 L315,229 L307,269 L304,288 L299,296 L298,297 Z"
+  },
+  "الكتف الجانبي": {
+    "title": "الكتف الجانبي (Lateral Shoulders)",
+    "mainImg": "https://i.ibb.co/ynnHB0rf/768x430.jpg",
+    "exercises": [
+      {
+        "name": "الرفع الجانبي(Lateral Raise)",
+        "desc": "ارفع الدامبلز للجانبين حتى مستوى الكتف مع ثني طفيف في الكوع.",
+        "images": {
+          "startImg": "https://i.ibb.co/cSWnmMS4/eleva-o-lateral-hateres.gif",
+          "endImg": ""
+        }
+      }
+    ],
+    "t": {
+      "x": "-5",
+      "y": "0",
+      "sx": "1",
+      "sy": "1"
+    },
+    "pathD": "M144,133 L92,141 L73,157 L72,169 L79,192 L84,187 L94,167 L102,151 L120,137 L141,133 Z M356,133 L408,141 L427,157 L428,169 L421,192 L416,187 L406,167 L398,151 L380,137 L359,133 Z"
+  }
+};
+// ============================================
+// DATA INSERTION END
+// ============================================
+
+const LS_KEY = "CyberGym_Gamified";
+let currentId = "chest", isPreview = true, isDrawing = false, isRedrawing = false, drawPoints = [], drawnParts = []; 
+let saveTimer = null;
+
+const audioFiles = {
+    open: new Audio('https://assets.mixkit.co/active_storage/sfx/2573/2573-preview.mp3'),
+    click: new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'),
+    close: new Audio('https://assets.mixkit.co/active_storage/sfx/2572/2572-preview.mp3')
+};
+Object.values(audioFiles).forEach(a=>a.volume=0.4);
+function playSfx(t){if(audioFiles[t]){audioFiles[t].currentTime=0;audioFiles[t].play().catch(()=>{})}}
+
+function toggleTheme() {
+    document.body.classList.toggle('theme-medical');
+    const isMedical = document.body.classList.contains('theme-medical');
+    const btn = document.querySelector('.theme-btn');
+    if (btn) btn.innerHTML = isMedical ? '✚' : '🧬';
+    localStorage.setItem('CyberGym_Theme_Game', isMedical ? 'medical' : 'cyber');
+    playSfx('click');
+}
+function loadTheme() {
+    const savedTheme = localStorage.getItem('CyberGym_Theme_Game');
+    if (savedTheme === 'medical') {
+        document.body.classList.add('theme-medical');
+        const btn = document.querySelector('.theme-btn');
+        if (btn) btn.innerHTML = '✚';
+    }
+}
+
+function init(){
+    loadTheme();
+    const saved = localStorage.getItem(LS_KEY);
+    if(saved){try{const p=JSON.parse(saved);if(p.config)globalConfig=p.config;if(p.data)defaultData={...defaultData,...p.data};}catch(e){console.error(e);}}
+    
+    document.getElementById('mainImageInput').value = globalConfig.mainImage;
+    document.getElementById('mainAnatomyImage').src = globalConfig.mainImage;
+    
+    // 💡 التحسين: جدولة العمليات الثقيلة (مثل رسم SVG) بشكل غير متزامن
+    requestAnimationFrame(() => {
+        restoreCustomMuscles(); 
+        refreshMuscleList();
+
+        ['inpX','inpY','inpScaleX','inpScaleY'].forEach(id=>document.getElementById(id).addEventListener('input',updateLayout));
+        document.getElementById('editTitle').addEventListener('input',e=>{if(defaultData[currentId]){defaultData[currentId].title=e.target.value;save();const sel=document.getElementById('muscleSelector');const opt=sel.querySelector(`option[value="${currentId}"]`);if(opt)opt.text=e.target.value;}});
+        document.getElementById('editMainImg').addEventListener('input',e=>{if(defaultData[currentId]){defaultData[currentId].mainImg=e.target.value;save();}});
+        document.getElementById('mainImageInput').addEventListener('input',e=>{globalConfig.mainImage=e.target.value;document.getElementById('mainAnatomyImage').src=e.target.value;save();});
+        
+        document.getElementById('svgOverlay').addEventListener('click', handleMapClick); 
+        document.getElementById('svgOverlay').addEventListener('dblclick', ()=>finishDrawing(false));
+        makePanelDraggable();
+    });
+}
+
+function restoreCustomMuscles() {
+    const svgOverlay = document.getElementById('svgOverlay');
+    svgOverlay.innerHTML = ''; 
+    const muscleKeys = Object.keys(defaultData).filter(key => defaultData[key].pathD);
+    let index = 0;
+    
+    // 💡 التحسين: تقسيم العمل عبر دالة تكرارية وجدولة زمنية
+    function processNextMuscle() {
+        if (index >= muscleKeys.length) return; 
+
+        const key = muscleKeys[index];
+        const data = defaultData[key];
+        
+        // 💡 التحسين: استخدام try/catch لتجنب فشل العملية بالكامل
+        try {
+             const newPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+             newPath.setAttribute("id", key); newPath.setAttribute("class", "muscle-zone"); newPath.setAttribute("d", data.pathD);
+             svgOverlay.appendChild(newPath);
+             updateDOMTransform(key);
+             newPath.addEventListener('click', e=>{ 
+                 if(isDrawing)return; 
+                 if(isPreview){
+                     // يجب أن يتم تفعيل المنطقة بشكل سريع
+                     activateZone(newPath);
+                     e.stopPropagation();
+                 } else {
+                     loadMuscleData(newPath.id);
+                     toggleAdmin(true);
+                     e.stopPropagation();
+                 }
+             });
+        } catch(e) {
+            console.error(`Error restoring muscle ${key}:`, e);
+        }
+        
+        index++;
+        // استخدام setTimeout(..., 0) لجدولة العملية التالية في حلقة الأحداث (Event Loop)
+        // مما يسمح للمتصفح بتحديث واجهة المستخدم بين العمليات
+        setTimeout(processNextMuscle, 0); 
+    }
+    
+    // بدء المعالجة
+    processNextMuscle();
+}
+
+
+function refreshMuscleList() {
+    const sel = document.getElementById('muscleSelector'); sel.innerHTML='';
+    const muscleKeys = Object.keys(defaultData).filter(key => defaultData[key].pathD);
+    if(muscleKeys.length === 0) { sel.innerHTML = '<option>لا توجد بيانات</option>'; currentId = null; return; }
+    muscleKeys.forEach(key => { const opt=document.createElement('option'); opt.value=key; opt.text=defaultData[key].title||key; sel.appendChild(opt); });
+    if(muscleKeys.includes(currentId)) sel.value = currentId; else if(muscleKeys.length > 0) { currentId = muscleKeys[0]; sel.value = currentId; }
+}
+
+function activateZone(zone){
+    playSfx('open');
+    document.querySelectorAll('.muscle-zone').forEach(z=>z.classList.remove('active')); zone.classList.add('active');
+    
+    let bbox; 
+    // 💡 التحسين: تجربة الحصول على getBBox لتجنب الفشل في بعض المتصفحات
+    try { 
+        bbox = zone.getBBox(); 
+    } catch (e) { 
+        bbox = { x: 500, y: 333.5, width: 0, height: 0 }; 
+    }
+    const cx = bbox.x + bbox.width/2, cy = bbox.y + bbox.height/2;
+    document.getElementById('zoomLayer').style.transformOrigin=`${(cx/1000)*100}% ${(cy/667)*100}%`; 
+    document.getElementById('zoomLayer').style.transform="scale(2.3)";
+    
+    const data=defaultData[zone.id];
+    document.getElementById('cardTitle').textContent=data.title;
+    const img=document.getElementById('mainMuscleImg'); img.src=data.mainImg||''; img.style.display=data.mainImg?'block':'none';
+    const bc=document.getElementById('buttonsContainer'); bc.innerHTML='';
+    if(data.exercises&&data.exercises.length>0){data.exercises.forEach(ex=>{const b=document.createElement('div');b.className='exercise-btn';b.textContent=ex.name;b.onclick=()=>showDetail(ex);bc.appendChild(b);});}
+    else bc.innerHTML='<p style="text-align:center;color:#888;">لا توجد تمارين</p>';
+    showListView();
+    // 💡 التحسين: استخدام setTimeout للسماح بتحريك الـ zoom قبل فتح البطاقة
+    setTimeout(()=>{document.getElementById('backdrop').classList.add('show');document.getElementById('infoCard').classList.add('show');},100);
+}
+
+function showDetail(ex){
+    playSfx('click');
+    document.getElementById('detailTitle').textContent=ex.name;
+    document.getElementById('detailDesc').innerHTML=(ex.desc||"").replace(/\n/g, '<br>');
+    document.getElementById('detailImgStart').src=ex.images?.startImg||'https://placehold.co/600x400/222/777?text=No+Img';
+    document.getElementById('detailImgStart').style.display='block';
+    document.getElementById('detailImgEnd').src=ex.images?.endImg||'';
+    document.getElementById('detailImgEnd').style.display=ex.images?.endImg?'block':'none';
+    document.getElementById('viewList').classList.remove('active'); document.getElementById('viewDetail').classList.add('active');
+}
+function showListView(){playSfx('click');document.getElementById('viewDetail').classList.remove('active');document.getElementById('viewList').classList.add('active');}
+function resetZoom(){playSfx('close');document.getElementById('infoCard').classList.remove('show');document.getElementById('backdrop').classList.remove('show');document.getElementById('zoomLayer').style.transform="scale(1)";setTimeout(()=>{document.querySelectorAll('.muscle-zone').forEach(z=>z.classList.remove('active'));},300);}
+
+function updateDOMTransform(id){const el=document.getElementById(id);if(el&&defaultData[id]?.t){const t=defaultData[id].t;el.style.transform=`translate(${t.x}px,${t.y}px) scale(${t.sx},${t.sy})`;}}
+function toggleAdmin(show){document.getElementById('adminPanel').style.display=show?'flex':'none';if(show&¤tId)loadMuscleData(currentId);}
+function switchTab(n){document.querySelectorAll('.panel-body').forEach(b=>b.classList.remove('active'));document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));document.getElementById('tab-'+n).classList.add('active');event.target.classList.add('active');}
+function loadMuscleData(id){currentId=id;document.getElementById('muscleSelector').value=id;document.querySelectorAll('.muscle-zone').forEach(z=>z.classList.remove('editing'));const el=document.getElementById(id);if(el)el.classList.add('editing');if(!defaultData[id])return;const d=defaultData[id];document.getElementById('inpX').value=d.t.x;document.getElementById('inpY').value=d.t.y;document.getElementById('inpScaleX').value=d.t.sx;document.getElementById('inpScaleY').value=d.t.sy;document.getElementById('editTitle').value=d.title;document.getElementById('editMainImg').value=d.mainImg||'';document.getElementById('pathDataInput').value=d.pathD;renderExercises(d.exercises||[]);}
+function renderExercises(list){const c=document.getElementById('exercisesContainer');c.innerHTML='';list.forEach((ex,i)=>{const div=document.createElement('div');div.className='exercise-block';div.innerHTML=`<button class="btn-del" onclick="deleteExercise(${i})">حذف</button><div class="control-group"><label>اسم التمرين</label><input type="text" value="${ex.name}" oninput="updateEx(${i},'name',this.value)"></div><div class="control-group"><label>صورة/GIF</label><input type="text" value="${ex.images?.startImg||''}" oninput="updateExImage(${i},'startImg',this.value)"></div><div class="control-group"><label>الوصف</label><textarea rows="3" oninput="updateEx(${i},'desc',this.value)">${ex.desc||''}</textarea></div>`;c.appendChild(div);});}
+window.updateEx=(i,k,v)=>{if(defaultData[currentId]?.exercises[i]){defaultData[currentId].exercises[i][k]=v;save();}}
+window.updateExImage=(i,k,v)=>{if(defaultData[currentId]?.exercises[i]){if(!defaultData[currentId].exercises[i].images)defaultData[currentId].exercises[i].images={};defaultData[currentId].exercises[i].images[k]=v;save();}}
+window.addExercise=()=>{if(defaultData[currentId]){defaultData[currentId].exercises.push({name:"تمرين جديد",desc:"",images:{startImg:"",endImg:""}});renderExercises(defaultData[currentId].exercises);save();}}
+window.deleteExercise=i=>{if(defaultData[currentId]){defaultData[currentId].exercises.splice(i,1);renderExercises(defaultData[currentId].exercises);save();}}
+function updateLayout(){const t=defaultData[currentId].t;t.x=document.getElementById('inpX').value;t.y=document.getElementById('inpY').value;t.sx=document.getElementById('inpScaleX').value;t.sy=document.getElementById('inpScaleY').value;updateDOMTransform(currentId);save();}
+function save(){
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+        try{
+            localStorage.setItem(LS_KEY,JSON.stringify({config:globalConfig,data:defaultData}));
+            document.getElementById('saveStatus').style.display='block';
+            setTimeout(()=>{document.getElementById('saveStatus').style.display='none';},1200);
+        }catch(e){console.error("Save Error:", e);}
+    }, 500); 
+}
+function exportDataJSON(){const b=new Blob([JSON.stringify({config:globalConfig,data:defaultData},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='CyberGym_Data.json';a.click();}
+window.handleImport=f=>{const r=new FileReader();r.onload=e=>{try{const j=JSON.parse(e.target.result);globalConfig=j.config;defaultData=j.data;save();restoreCustomMuscles();alert('تم الاستيراد');location.reload();}catch(err){alert('خطأ');}};r.readAsText(f.files[0]);}
+function togglePreviewMode(){isPreview=document.getElementById('previewToggle').checked;document.body.classList.toggle('preview-mode',isPreview);if(!isPreview&¤tId)document.getElementById(currentId).classList.add('editing'); else document.querySelectorAll('.muscle-zone').forEach(z=>z.classList.remove('editing'));} 
+function resetToFactory(){if(confirm('حذف كل البيانات؟')){localStorage.removeItem(LS_KEY);location.reload();}}
+
+function updateSymmetryAxis(){const z=document.getElementById('bodyZoneSelector').value;document.getElementById('symmetryAxis').value=z==='front'?250:750;}
+function toggleDrawMode(){isDrawing=!isDrawing;isRedrawing=false;const btn=document.getElementById('drawBtn');const c=document.getElementById('drawControls');if(isDrawing){btn.textContent="جاري الرسم...";btn.classList.add('active');c.style.display='block';document.body.classList.add('drawing-mode');drawPoints=[];drawnParts=[];initTempPath();updateSymmetryAxis();document.querySelectorAll('.muscle-zone').forEach(z=>z.classList.remove('editing'));}else{cancelDrawing();}}
+function startRedraw(){if(!currentId)return;isDrawing=true;isRedrawing=true;document.getElementById('redrawBtn').textContent="جاري التعديل...";document.getElementById('redrawBtn').classList.add('active');document.getElementById('drawControls').style.display='block';document.body.classList.add('drawing-mode');drawPoints=[];drawnParts=[];initTempPath();document.querySelectorAll('.muscle-zone').forEach(z=>z.classList.remove('editing'));} 
+function initTempPath(){const s=document.getElementById('svgOverlay');document.getElementById('tempDrawPath')?.remove();document.getElementById('tempFinishedPath')?.remove();const tp=document.createElementNS("http://www.w3.org/2000/svg","path");tp.id='tempDrawPath';tp.classList.add('temp-path');s.appendChild(tp);const tf=document.createElementNS("http://www.w3.org/2000/svg","path");tf.id='tempFinishedPath';tf.classList.add('temp-path-finished');s.appendChild(tf);}
+function handleMapClick(e){if(!isDrawing)return;const r=document.getElementById('svgOverlay').getBoundingClientRect();const x=Math.round((e.clientX-r.left)*(1000/r.width));const y=Math.round((e.clientY-r.top)*(667/r.height));drawPoints.push([x,y]);updateTempPath();e.stopPropagation();}
+function updateTempPath(){const el=document.getElementById('tempDrawPath');if(!el)return;if(drawPoints.length===0){el.setAttribute("d","");return;}const d=drawPoints.map((p,i)=>(i===0?"M":"L")+p[0]+","+p[1]).join(" ");el.setAttribute("d",d);}
+function addManualPart(){if(drawPoints.length<3)return;const d=drawPoints.map((p,i)=>(i===0?"M":"L")+p[0]+","+p[1]).join(" ")+" Z";drawnParts.push(d);document.getElementById('tempFinishedPath').setAttribute("d",drawnParts.join(" "));drawPoints=[];updateTempPath();}
+function undoLastPoint(){if(drawPoints.length>0)drawPoints.pop();else if(drawnParts.length>0){drawnParts.pop();document.getElementById('tempFinishedPath').setAttribute("d",drawnParts.join(" "));}updateTempPath();}
+function cancelDrawing(){isDrawing=false;isRedrawing=false;document.getElementById('drawBtn').textContent="+ رسم عضلة جديدة";document.getElementById('drawBtn').classList.remove('active');document.getElementById('redrawBtn').textContent="✎ إعادة رسم";document.getElementById('redrawBtn').classList.remove('active');document.getElementById('drawControls').style.display='none';document.body.classList.remove('drawing-mode');document.getElementById('tempDrawPath')?.remove();document.getElementById('tempFinishedPath')?.remove();drawPoints=[];drawnParts=[];if(!isPreview&¤tId)document.getElementById(currentId)?.classList.add('editing');}
+function finishDrawing(sym){if(drawPoints.length>2)addManualPart();if(drawnParts.length===0)return;if(sym){const axis=parseFloat(document.getElementById('symmetryAxis').value);const lp=drawnParts[drawnParts.length-1].match(/[ML](\d+,\d+)/g).map(s=>s.substring(1).split(',').map(Number));const mp=lp.map(p=>[(2*axis)-p[0],p[1]]);drawnParts.push(mp.map((p,i)=>(i===0?"M":"L")+p[0]+","+p[1]).join(" ")+" Z");}const fd=drawnParts.join(" ");if(isRedrawing){defaultData[currentId].pathD=fd;save();restoreCustomMuscles();loadMuscleData(currentId);}else{const n=prompt("اسم العضلة (إنجليزي):");if(n&&!defaultData[n]){defaultData[n]={title:"جديد",exercises:[],t:{x:0,y:0,sx:1,sy:1},pathD:fd};save();restoreCustomMuscles();refreshMuscleList();loadMuscleData(n);}}cancelDrawing();}
+function updatePathData(){const v=document.getElementById('pathDataInput').value;if(v&¤tId){defaultData[currentId].pathD=v;save();restoreCustomMuscles();}}
+function deleteCurrentMuscle(){if(currentId&&confirm("حذف؟")){delete defaultData[currentId];save();restoreCustomMuscles();refreshMuscleList();}}
+
+function makePanelDraggable(){const p=document.getElementById('adminPanel'),h=document.getElementById('panelHeader');let d=false,ox,oy;h.addEventListener('mousedown',e=>{if(e.target.closest('.icon-btn'))return;d=true;ox=e.clientX-p.offsetLeft;oy=e.clientY-p.offsetTop;});document.addEventListener('mouseup',()=>d=false);document.addEventListener('mousemove',e=>{if(d){p.style.left=(e.clientX-ox)+'px';p.style.top=(e.clientY-oy)+'px';}});}
+function togglePanelOpacity(){const p=document.getElementById('adminPanel');p.style.opacity=p.style.opacity==='0.2'?'1':'0.2';}
+
+function exportHTML(){
+    const css=document.querySelector('style').innerHTML;
+    const svgClone=document.getElementById('svgOverlay').cloneNode(true);
+    svgClone.querySelectorAll('.temp-path, .temp-path-finished').forEach(t=>t.remove());
+    const finalScript=`
+const globalConfig=${JSON.stringify(globalConfig)};const defaultData=${JSON.stringify(defaultData)};
+const audioFiles={open:new Audio('https://assets.mixkit.co/active_storage/sfx/2573/2573-preview.mp3'),click:new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'),close:new Audio('https://assets.mixkit.co/active_storage/sfx/2572/2572-preview.mp3')};
+Object.values(audioFiles).forEach(a=>a.volume=0.4);function playSfx(t){if(audioFiles[t]){audioFiles[t].currentTime=0;audioFiles[t].play().catch(()=>{})}}
+document.addEventListener('DOMContentLoaded',()=>{loadTheme();document.getElementById('mainAnatomyImage').src=globalConfig.mainImage;const s=document.getElementById('svgOverlay');
+// 💡 التحسين: استخدام setTimeout لجدولة رسم الـ SVG
+setTimeout(() => { 
+    Object.keys(defaultData).forEach(k=>{
+        if(defaultData[k].pathD){
+            const n=document.createElementNS("http://www.w3.org/2000/svg","path");
+            n.id=k;n.setAttribute("class","muscle-zone");n.setAttribute("d",defaultData[k].pathD);s.appendChild(n);updateDOMTransform(k);
+            n.addEventListener('click',e=>{activateZone(n);e.stopPropagation();});
+        }
+    });
+}, 0);
+});
+function activateZone(z){playSfx('open');document.querySelectorAll('.muscle-zone').forEach(x=>x.classList.remove('active'));z.classList.add('active');let b;try{b=z.getBBox()}catch(e){b={x:500,y:333.5,width:0,height:0}}const cx=b.x+b.width/2,cy=b.y+b.height/2;document.getElementById('zoomLayer').style.transformOrigin=\`\${(cx/1000)*100}% \${(cy/667)*100}%\`;document.getElementById('zoomLayer').style.transform='scale(2.3)';const d=defaultData[z.id];document.getElementById('cardTitle').textContent=d.title;const i=document.getElementById('mainMuscleImg');i.src=d.mainImg||'';i.style.display=d.mainImg?'block':'none';const c=document.getElementById('buttonsContainer');c.innerHTML='';if(d.exercises?.length){d.exercises.forEach(ex=>{const b=document.createElement('div');b.className='exercise-btn';b.textContent=ex.name;b.onclick=()=>showDetail(ex);c.appendChild(b);});}else c.innerHTML='<p style="text-align:center;color:#888">لا تمارين</p>';setTimeout(()=>{document.getElementById('backdrop').classList.add('show');document.getElementById('infoCard').classList.add('show');},100);}
+function showDetail(ex){playSfx('click');document.getElementById('detailTitle').textContent=ex.name;document.getElementById('detailDesc').innerHTML=(ex.desc||"").replace(/\\n/g,'<br>');document.getElementById('detailImgStart').src=ex.images?.startImg||'';document.getElementById('detailImgStart').style.display=ex.images?.startImg?'block':'none';document.getElementById('detailImgEnd').src=ex.images?.endImg||'';document.getElementById('detailImgEnd').style.display=ex.images?.endImg?'block':'none';document.getElementById('viewList').classList.remove('active');document.getElementById('viewDetail').classList.add('active');}
+function showListView(){playSfx('click');document.getElementById('viewDetail').classList.remove('active');document.getElementById('viewList').classList.add('active');}
+function resetZoom(){playSfx('close');document.getElementById('infoCard').classList.remove('show');document.getElementById('backdrop').classList.remove('show');document.getElementById('zoomLayer').style.transform='scale(1)';setTimeout(()=>{document.querySelectorAll('.muscle-zone').forEach(z=>z.classList.remove('active'));},300);}
+function updateDOMTransform(id){const el=document.getElementById(id);if(el&&defaultData[id]?.t){const t=defaultData[id].t;el.style.transform=\`translate(\${t.x}px,\${t.y}px) scale(\${t.sx},\${t.sy})\`;}}
+function toggleTheme(){document.body.classList.toggle('theme-medical');const isMedical=document.body.classList.contains('theme-medical');const btn=document.querySelector('.theme-btn');if(btn)btn.innerHTML=isMedical?'✚':'🧬';localStorage.setItem('CyberGym_Theme_Game',isMedical?'medical':'cyber');playSfx('click');}
+function loadTheme(){const s=localStorage.getItem('CyberGym_Theme_Game');if(s==='medical'){document.body.classList.add('theme-medical');const btn=document.querySelector('.theme-btn');if(btn)btn.innerHTML='✚';}}
+    `;
+    const finalHTML=`<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>دليل التمارين</title><link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet"><style>${css}</style></head><body class="preview-mode"><h1 id="mainTitle">دليل التمارين الرياضية</h1><p class="subtitle">اضغط للمشاهدة</p><div class="viewport"><div class="zoom-layer" id="zoomLayer"><img id="mainAnatomyImage" src="${globalConfig.mainImage}" class="anatomy-img"><svg class="overlay-layer" id="svgOverlay" viewBox="0 0 1000 667" preserveAspectRatio="none">${svgClone.innerHTML}</svg></div></div><div class="backdrop" id="backdrop" onclick="resetZoom()"></div><div class="info-card" id="infoCard"><button class="close-popup-btn" onclick="resetZoom()">×</button><h2 id="cardTitle"></h2><div id="viewList" class="view-section active"><img id="mainMuscleImg" class="main-muscle-img" src=""><div id="buttonsContainer"></div></div><div id="viewDetail" class="view-section"><button class="back-btn" onclick="showListView()">🡠 قائمة التمارين</button><div class="detail-img-container"><img src="" class="detail-img" id="detailImgStart"><img src="" class="detail-img" id="detailImgEnd"></div><h3 id="detailTitle" style="color:#00f2ff;"></h3><p id="detailDesc"></p></div></div><button class="theme-btn" onclick="toggleTheme()">🧬</button><script>${finalScript}<\/script></body></html>`;
+    const b=new Blob([finalHTML],{type:'text/html;charset=utf-8'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='CyberGym_Fun.html';a.click();
+}
+
+init();
+</script>
+</body>
+</html>
